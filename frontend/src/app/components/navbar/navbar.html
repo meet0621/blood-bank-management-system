@@ -1,0 +1,76 @@
+<nav class="main-navbar">
+  <a class="navbar-brand-custom" routerLink="/">
+    <span class="brand-icon animate-float"><i class="bi bi-droplet-fill"></i></span>
+    BloodBank Pro
+  </a>
+
+  <button class="navbar-mobile-toggle" (click)="isCollapsed = !isCollapsed">
+    <i class="bi" [ngClass]="isCollapsed ? 'bi-list' : 'bi-x-lg'"></i>
+  </button>
+
+  <div class="navbar-collapse-custom" [class.show]="!isCollapsed">
+    <ul class="navbar-nav-custom">
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/dashboard" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/donors" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-people-fill"></i> Donors
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/patients" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-person-badge-fill"></i> Patients
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/inventory" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-droplet-half"></i> Inventory
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/appointments" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-calendar-check"></i> Appointments
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/camps" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-hospital"></i> Camps
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/transfers" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-arrow-left-right"></i> Transfers
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin', 'Staff')">
+        <a class="nav-link-custom" routerLink="/reports" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-bar-chart-line-fill"></i> Reports
+        </a>
+      </li>
+      <li *ngIf="hasRole('Admin')">
+        <a class="nav-link-custom" routerLink="/audit" routerLinkActive="active" (click)="isCollapsed=true">
+          <i class="bi bi-journal-text"></i> Audit Trail
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="navbar-right-section">
+    <button class="theme-toggle-btn" (click)="toggleTheme()"
+      [title]="(themeService.isDarkMode$ | async) ? 'Light Mode' : 'Dark Mode'">
+      <i class="bi" [ngClass]="(themeService.isDarkMode$ | async) ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
+    </button>
+
+    <button class="user-avatar-btn" *ngIf="authService.isLoggedIn()">
+      <span class="user-avatar-circle">{{ authService.getUserInitials() }}</span>
+      {{ (authService.getCurrentUser()?.name ?? '').split(' ')[0] }}
+    </button>
+
+    <button class="btn-logout" *ngIf="authService.isLoggedIn()" (click)="logout()" title="Logout">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+  </div>
+</nav>

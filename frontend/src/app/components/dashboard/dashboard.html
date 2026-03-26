@@ -1,0 +1,292 @@
+<div class="page-container" @fadeInUp>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-text">
+            <h1><i class="bi bi-grid-1x2-fill text-primary-custom"></i> Dashboard</h1>
+            <p>Real-time overview of blood bank operations</p>
+        </div>
+        <div class="quick-actions">
+            <a routerLink="/donors" class="btn-primary-custom"><i class="bi bi-plus-lg"></i> Add Donor</a>
+            <a routerLink="/patients" class="btn-secondary-custom"><i class="bi bi-plus-lg"></i> Add Patient</a>
+        </div>
+    </div>
+
+    @if (loading) {
+    <app-skeleton-loader type="cards"></app-skeleton-loader>
+    <app-skeleton-loader type="chart"></app-skeleton-loader>
+    <app-skeleton-loader type="table" [count]="4"></app-skeleton-loader>
+    } @else if (stats) {
+
+    <!-- Expiry Alert Banner -->
+    @if (stats.expiringCount > 0 || stats.expiredCount > 0) {
+    <div class="alert-banner critical" style="margin-bottom:12px">
+        <i class="bi bi-clock-fill"></i>
+        <span><strong>Expiry Alert:</strong>
+            @if (stats.expiredCount > 0) {
+            <span class="badge-custom badge-rejected" style="margin:0 4px">{{ stats.expiredCount }} Expired</span>
+            }
+            @if (stats.expiringCount > 0) {
+            <span class="badge-custom badge-pending" style="margin:0 4px">{{ stats.expiringCount }} Expiring Soon</span>
+            }
+            — review inventory to remove or use expiring units.
+        </span>
+    </div>
+    }
+
+    <!-- Critical Stock Alert -->
+    @if (criticalStock.length > 0) {
+    <div class="alert-banner critical">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span><strong>Critical Alert:</strong>
+            @for (item of criticalStock; track item.bloodGroup; let last = $last) {
+            {{ item.bloodGroup }} ({{ item.quantity }} units){{ last ? '' : ', ' }}
+            }
+            — stock levels are critically low!
+        </span>
+    </div>
+    }
+
+    @if (lowStock.length > 0) {
+    <div class="alert-banner warning-banner" @fadeInUp>
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span><strong>Low Stock:</strong>
+            @for (item of lowStock; track item.bloodGroup; let last = $last) {
+            {{ item.bloodGroup }} ({{ item.quantity }} units){{ last ? '' : ', ' }}
+            }
+            — consider restocking soon.
+        </span>
+    </div>
+    }
+
+    <!-- Stat Cards -->
+    <div class="grid-cols-4" style="margin-bottom:24px" @staggerList>
+        <div class="stat-card">
+            <div class="stat-card-icon donors"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ displayDonors }}</div>
+                <div class="stat-label">Total Donors</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon patients"><i class="bi bi-person-badge-fill"></i></div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ displayPatients }}</div>
+                <div class="stat-label">Total Patients</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon blood"><i class="bi bi-droplet-fill"></i></div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ displayUnits }}</div>
+                <div class="stat-label">Blood Units</div>
+            </div>
+        </div>
+        <div class="stat-card" [class.expiry-warning]="stats.expiringCount > 0">
+            <div class="stat-card-icon" [class.requests]="stats.expiringCount === 0"
+                [class.expiring]="stats.expiringCount > 0">
+                <i class="bi" [ngClass]="stats.expiringCount > 0 ? 'bi-clock-fill' : 'bi-clipboard2-pulse-fill'"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ stats.expiringCount }}</div>
+                <div class="stat-label">Expiring Soon</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card-custom" style="margin-bottom:24px">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-bar-chart-fill text-primary-custom"></i> Blood Inventory Levels</h3>
+        </div>
+        <div class="card-custom-body">
+            <div class="chart-container">
+                <canvas #inventoryChart></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Units Widget -->
+    @if (expiringUnits.length > 0) {
+    <div class="card-custom" style="margin-bottom:24px">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-hourglass-split" style="color:var(--warning)"></i> Units Expiring Within 7 Days</h3>
+            <button class="btn-secondary-custom" style="font-size:0.8rem;padding:6px 12px" (click)="flagExpired()">
+                <i class="bi bi-trash3"></i> Flag Expired
+            </button>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Blood ID</th>
+                            <th>Blood Group</th>
+                            <th>Component</th>
+                            <th>Collected</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (unit of expiringUnits; track unit._id) {
+                        <tr>
+                            <td><span style="font-weight:500">{{ unit.bloodId }}</span></td>
+                            <td><span class="badge-custom badge-blood">{{ unit.bloodGroup }}</span></td>
+                            <td><span class="badge-custom"
+                                    style="background:var(--bg-secondary);color:var(--text-primary);font-size:0.75rem">{{
+                                    unit.componentType }}</span></td>
+                            <td style="color:var(--text-secondary)">{{ unit.collectedDate | date:'mediumDate' }}</td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="getExpiryBadgeClass(unit.expiryDate)">
+                                    {{ getExpiryIcon(unit.expiryDate) }} {{ unit.expiryDate | date:'mediumDate' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="getExpiryStatusClass(unit.expiryDate)">
+                                    {{ getExpiryStatusText(unit.expiryDate) }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Today's Appointments Widget -->
+    @if (todaysAppointments.length > 0) {
+    <div class="card-custom" style="margin-bottom:24px">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-calendar-check" style="color:var(--primary)"></i> Today's Appointments</h3>
+            <a routerLink="/appointments" class="btn-secondary-custom" style="font-size:0.8rem;padding:6px 12px">
+                View All <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Donor</th>
+                            <th>Blood Group</th>
+                            <th>Time Slot</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (apt of todaysAppointments; track apt._id) {
+                        <tr>
+                            <td style="font-weight:500">{{ $any(apt.donorId)?.name || 'Unknown' }}</td>
+                            <td><span class="badge-custom badge-blood">{{ $any(apt.donorId)?.bloodGroup || '—' }}</span>
+                            </td>
+                            <td><i class="bi bi-clock"></i> {{ apt.timeSlot }}</td>
+                            <td>
+                                <span class="badge-custom"
+                                    [ngClass]="{'badge-pending': apt.status === 'Scheduled', 'badge-approved': apt.status === 'Completed', 'badge-rejected': apt.status === 'Cancelled'}">
+                                    {{ apt.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Pending Transfers Widget -->
+    @if (pendingTransfers.length > 0) {
+    <div class="card-custom" @fadeInUp>
+        <div class="card-custom-header">
+            <h3><i class="bi bi-arrow-left-right text-primary-custom"></i> Pending Transfers</h3>
+            <a routerLink="/transfers" class="btn-secondary-custom" style="font-size:0.8rem;padding:6px 12px">
+                View All <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Blood Group</th>
+                            <th>Units</th>
+                            <th>Requested By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (t of pendingTransfers; track t._id) {
+                        <tr>
+                            <td>{{ transferHospitalName(t.fromHospital) }}</td>
+                            <td>{{ transferHospitalName(t.toHospital) }}</td>
+                            <td><span class="badge-custom badge-blood">{{ t.bloodGroup }}</span></td>
+                            <td><strong>{{ t.units }}</strong></td>
+                            <td>{{ t.requestedBy || '—' }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Recent Donations -->
+    <div class="card-custom">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-clock-history text-primary-custom"></i> Recent Donations</h3>
+            <a routerLink="/donors" class="btn-secondary-custom" style="font-size:0.8rem;padding:6px 12px">
+                View All <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            @if (stats.recentDonations.length > 0) {
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Donor</th>
+                            <th>Blood Group</th>
+                            <th>Date</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (donor of stats.recentDonations; track donor._id) {
+                        <tr>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <span class="user-initial"
+                                        [style.background]="'hsl(' + (donor.name.charCodeAt(0) * 37 % 360) + ',55%,50%)'">
+                                        {{ donor.name.charAt(0) }}
+                                    </span>
+                                    <span style="font-weight:500">{{ donor.name }}</span>
+                                </div>
+                            </td>
+                            <td><span class="badge-custom badge-blood">{{ donor.bloodGroup }}</span></td>
+                            <td style="color:var(--text-secondary)">{{ donor.dateOfDonation | date:'mediumDate' }}</td>
+                            <td style="color:var(--text-secondary)">{{ donor.contact }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <div class="empty-state" style="padding:32px">
+                <div class="empty-state-icon" style="width:56px;height:56px;font-size:1.4rem">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h4>No Recent Donations</h4>
+                <p>Donations will appear here as donors are registered.</p>
+            </div>
+            }
+        </div>
+    </div>
+
+    }
+</div>

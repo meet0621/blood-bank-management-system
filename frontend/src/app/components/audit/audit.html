@@ -1,0 +1,121 @@
+<div class="page-container" @staggerList>
+    <div class="page-header" @fadeInUp>
+        <div>
+            <h1><i class="bi bi-journal-text"></i> Audit Trail</h1>
+            <p class="page-subtitle">Complete activity log of all system operations</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="audit-stats" @fadeInUp>
+        <div class="stat-card">
+            <i class="bi bi-list-check"></i>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total Entries</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-calendar-day"></i>
+            <div class="stat-value">{{ stats.todayCount }}</div>
+            <div class="stat-label">Today</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-shield-check"></i>
+            <div class="stat-value">{{ stats.byEntity?.length || 0 }}</div>
+            <div class="stat-label">Entity Types</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-activity"></i>
+            <div class="stat-value">{{ stats.byAction?.length || 0 }}</div>
+            <div class="stat-label">Action Types</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar" @fadeInUp>
+        <div class="filter-group">
+            <select [(ngModel)]="entityFilter" (change)="applyFilters()" class="filter-input">
+                <option value="">All Entities</option>
+                @for (e of entities; track e) {
+                <option [value]="e">{{ e }}</option>
+                }
+            </select>
+            <select [(ngModel)]="actionFilter" (change)="applyFilters()" class="filter-input">
+                <option value="">All Actions</option>
+                @for (a of actions; track a) {
+                <option [value]="a">{{ a }}</option>
+                }
+            </select>
+            <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="applyFilters()"
+                class="filter-input search-input" placeholder="Search descriptions...">
+            <button class="btn-filter" (click)="applyFilters()"><i class="bi bi-search"></i></button>
+            @if (entityFilter || actionFilter || searchQuery) {
+            <button class="btn-clear" (click)="clearFilters()"><i class="bi bi-x-lg"></i> Clear</button>
+            }
+        </div>
+        <div class="filter-meta">
+            {{ totalItems }} entries found
+        </div>
+    </div>
+
+    <!-- Log Table -->
+    <div class="card-custom" @fadeInUp>
+        <div class="card-custom-body" style="padding:0">
+            @if (loading) {
+            <div class="table-loading">
+                <div class="spinner"></div>
+                <p>Loading audit logs...</p>
+            </div>
+            } @else if (logs.length === 0) {
+            <div class="empty-state">
+                <i class="bi bi-journal-x"></i>
+                <p>No audit entries found.</p>
+            </div>
+            } @else {
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width:44px"></th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Description</th>
+                            <th>Performed By</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (log of logs; track log._id) {
+                        <tr @fadeInUp>
+                            <td>
+                                <span class="action-icon" [class]="getActionClass(log.action)">
+                                    <i class="bi" [class]="getActionIcon(log.action)"></i>
+                                </span>
+                            </td>
+                            <td><span class="action-badge" [class]="getActionClass(log.action)">{{ log.action }}</span>
+                            </td>
+                            <td><span class="entity-badge">{{ log.entity }}</span></td>
+                            <td class="description-cell">{{ log.description }}</td>
+                            <td>{{ log.performedByName }}</td>
+                            <td class="timestamp-cell">{{ log.createdAt | date:'short' }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1) {
+            <div class="pagination">
+                <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+                <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+            }
+            }
+        </div>
+    </div>
+</div>

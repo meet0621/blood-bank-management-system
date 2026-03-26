@@ -1,0 +1,132 @@
+<div class="page-container" @fadeInUp>
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title"><i class="bi bi-calendar-check"></i> Appointments</h1>
+            <p class="page-subtitle">Manage donor appointment scheduling</p>
+        </div>
+        <button class="btn btn-primary" (click)="openForm()">
+            <i class="bi bi-plus-lg"></i> Schedule Appointment
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label>Date</label>
+            <input type="date" class="form-input" [(ngModel)]="filterDate" (change)="applyFilters()" />
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select class="form-input" [(ngModel)]="filterStatus" (change)="applyFilters()">
+                <option value="">All</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+        <button class="btn btn-outline" (click)="resetFilters()"><i class="bi bi-arrow-counterclockwise"></i>
+            Reset</button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading appointments...</p>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="card" *ngIf="!isLoading" @fadeInUp>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Donor</th>
+                        <th>Blood Group</th>
+                        <th>Date</th>
+                        <th>Time Slot</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngIf="appointments.length === 0">
+                        <td colspan="8" class="text-center" style="padding: 40px; opacity: 0.6">
+                            <i class="bi bi-calendar-x" style="font-size: 2rem"></i>
+                            <p>No appointments found</p>
+                        </td>
+                    </tr>
+                    <tr *ngFor="let apt of appointments" @staggerList>
+                        <td><span class="badge badge-secondary">{{ apt.appointmentId }}</span></td>
+                        <td class="fw-600">{{ getDonorName(apt.donorId) }}</td>
+                        <td><span class="badge badge-primary">{{ getDonorBloodGroup(apt.donorId) }}</span></td>
+                        <td>{{ formatDate(apt.date) }}</td>
+                        <td><i class="bi bi-clock"></i> {{ apt.timeSlot }}</td>
+                        <td><span class="badge" [ngClass]="getStatusBadge(apt.status)">{{ apt.status }}</span></td>
+                        <td>{{ apt.notes || '—' }}</td>
+                        <td class="actions-cell">
+                            <button *ngIf="apt.status === 'Scheduled'" class="btn-icon btn-success-icon"
+                                title="Complete" (click)="updateStatus(apt, 'Completed')">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button *ngIf="apt.status === 'Scheduled'" class="btn-icon btn-warning-icon" title="Cancel"
+                                (click)="updateStatus(apt, 'Cancelled')">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            <button class="btn-icon btn-danger-icon" title="Delete" (click)="deleteAppointment(apt)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Schedule Form Modal -->
+    <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+        <div class="modal-content" (click)="$event.stopPropagation()" @fadeInUp>
+            <div class="modal-header">
+                <h3><i class="bi bi-calendar-plus"></i> Schedule Appointment</h3>
+                <button class="modal-close" (click)="closeForm()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <form (ngSubmit)="createAppointment()" class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Donor *</label>
+                    <select class="form-input" [(ngModel)]="formData.donorId" name="donorId" required>
+                        <option value="" disabled>Select a donor</option>
+                        <option *ngFor="let d of donors" [value]="d._id">{{ d.name }} ({{ d.bloodGroup }})</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date *</label>
+                    <input type="date" class="form-input" [(ngModel)]="formData.date" name="date" required
+                        (change)="onDateSelected()" />
+                </div>
+                <div class="form-group" *ngIf="availableSlots.length > 0">
+                    <label class="form-label">Time Slot *</label>
+                    <div class="slot-grid">
+                        <button type="button" *ngFor="let s of availableSlots" class="slot-btn"
+                            [class.selected]="formData.timeSlot === s.slot" [class.full]="s.isFull"
+                            [disabled]="s.isFull" (click)="formData.timeSlot = s.slot">
+                            <span class="slot-time">{{ s.slot }}</span>
+                            <span class="slot-avail">{{ s.available }} left</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" [(ngModel)]="formData.notes" name="notes" rows="2"
+                        placeholder="Optional notes..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" (click)="closeForm()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,286 @@
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-text">
+            <h1><i class="bi bi-droplet-half text-primary-custom"></i> Blood Inventory</h1>
+            <p>Monitor blood stock levels across all blood groups and components</p>
+        </div>
+        <div class="quick-actions">
+            <div style="display:flex;gap:8px">
+                <button class="btn-secondary-custom" [class.active]="viewMode === 'grouped'"
+                    (click)="viewMode = 'grouped'" style="font-size:0.8rem;padding:6px 12px">
+                    <i class="bi bi-grid-3x3-gap"></i> Grouped
+                </button>
+                <button class="btn-secondary-custom" [class.active]="viewMode === 'detailed'"
+                    (click)="viewMode = 'detailed'" style="font-size:0.8rem;padding:6px 12px">
+                    <i class="bi bi-list-ul"></i> Components
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (loading) {
+    <app-skeleton-loader type="cards"></app-skeleton-loader>
+    <app-skeleton-loader type="table" [count]="8"></app-skeleton-loader>
+    } @else if (bloodBank) {
+
+    <!-- KPI Row -->
+    <div class="grid-cols-4" style="margin-bottom:24px">
+        <div class="stat-card">
+            <div class="stat-card-icon blood"><i class="bi bi-hospital-fill"></i></div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ bloodBank.name }}</div>
+                <div class="stat-label">Blood Bank</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon donors"><i class="bi bi-geo-alt-fill"></i></div>
+            <div class="stat-card-content">
+                <div class="stat-value" style="font-size:1rem">{{ bloodBank.location }}</div>
+                <div class="stat-label">Location</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon patients"><i class="bi bi-box-seam-fill"></i></div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ totalUnits }}</div>
+                <div class="stat-label">Total Units</div>
+            </div>
+        </div>
+        <div class="stat-card" [class.expiry-warning]="expiringUnits.length > 0">
+            <div class="stat-card-icon" [class.requests]="expiringUnits.length === 0"
+                [class.expiring]="expiringUnits.length > 0">
+                <i class="bi" [ngClass]="expiringUnits.length > 0 ? 'bi-clock-fill' : 'bi-grid-3x3-gap-fill'"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-value">{{ expiringUnits.length }}</div>
+                <div class="stat-label">Expiring Soon</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Alert -->
+    @if (criticalItems.length > 0) {
+    <div class="alert-banner critical">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span><strong>Critical Stock Alert:</strong>
+            @for (item of criticalItems; track item.bloodGroup; let last = $last) {
+            {{ item.bloodGroup }} ({{ item.totalQuantity }} units){{ last ? '' : ', ' }}
+            }
+            — immediate restocking required!
+        </span>
+    </div>
+    }
+
+    <!-- Grouped View -->
+    @if (viewMode === 'grouped') {
+    <div class="card-custom" style="margin-bottom:24px">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-bar-chart-steps text-primary-custom"></i> Stock Levels by Blood Group</h3>
+            <span style="font-size:0.78rem;color:var(--text-muted)">
+                <i class="bi bi-clock"></i> Last updated: {{ bloodBank.updatedAt | date:'medium' }}
+            </span>
+        </div>
+        <div class="card-custom-body">
+            <div class="grid-cols-2" style="gap:20px" @staggerList>
+                @for (item of groupedInventory; track item.bloodGroup) {
+                <div style="display:flex;align-items:center;gap:16px;padding:14px;border-radius:var(--radius-md);border:1px solid var(--border-color);transition:all var(--transition-fast)"
+                    [style.border-left]="'4px solid ' + (getStockLevel(item.totalQuantity) === 'high' ? 'var(--success)' : getStockLevel(item.totalQuantity) === 'medium' ? 'var(--warning)' : 'var(--danger)')">
+                    <div style="text-align:center;min-width:60px">
+                        <span class="badge-custom badge-blood" style="font-size:0.9rem;padding:6px 12px">{{
+                            item.bloodGroup }}</span>
+                    </div>
+                    <div style="flex:1">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                            <span style="font-weight:600;font-size:1.1rem">{{ item.totalQuantity }} <span
+                                    style="font-size:0.78rem;color:var(--text-muted);font-weight:400">units</span></span>
+                            <span class="badge-custom" [ngClass]="{
+                'badge-approved': getStockLevel(item.totalQuantity) === 'high',
+                'badge-pending': getStockLevel(item.totalQuantity) === 'medium',
+                'badge-rejected': getStockLevel(item.totalQuantity) === 'low'
+              }">
+                                <i class="bi" [ngClass]="getStatusIcon(item.totalQuantity)"></i>
+                                {{ getStatusText(item.totalQuantity) }}
+                            </span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-bar-fill" [ngClass]="getStockLevel(item.totalQuantity)"
+                                [style.width.%]="getProgressWidth(item.totalQuantity)"></div>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Detailed Component View -->
+    @if (viewMode === 'detailed') {
+    <div class="card-custom" style="margin-bottom:24px">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-diagram-3 text-primary-custom"></i> Component Breakdown</h3>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Component</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (group of componentInventory; track group.bloodGroup) {
+                        @for (comp of group.components; track comp.component; let first = $first) {
+                        <tr>
+                            @if (first) {
+                            <td [attr.rowspan]="group.components.length" style="vertical-align:middle">
+                                <span class="badge-custom badge-blood" style="font-size:0.9rem;padding:6px 12px">{{
+                                    group.bloodGroup }}</span>
+                                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">
+                                    Total: {{ group.totalQuantity }}
+                                </div>
+                            </td>
+                            }
+                            <td>
+                                <span style="font-weight:500">{{ comp.component }}</span>
+                            </td>
+                            <td>
+                                <span style="font-weight:600">{{ comp.quantity }}</span>
+                                <span style="font-size:0.75rem;color:var(--text-muted)"> units</span>
+                            </td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="{
+                                        'badge-approved': getStockLevel(comp.quantity) === 'high',
+                                        'badge-pending': getStockLevel(comp.quantity) === 'medium',
+                                        'badge-rejected': getStockLevel(comp.quantity) === 'low'
+                                    }">
+                                    <i class="bi" [ngClass]="getStatusIcon(comp.quantity)"></i>
+                                    {{ getStatusText(comp.quantity) }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Expiring Units -->
+    @if (expiringUnits.length > 0) {
+    <div class="card-custom" style="margin-bottom:24px">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-hourglass-split" style="color:var(--warning)"></i> Expiring Units</h3>
+            <button class="btn-primary-custom" style="font-size:0.8rem;padding:6px 12px" (click)="flagExpired()">
+                <i class="bi bi-flag-fill"></i> Flag All Expired
+            </button>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Blood ID</th>
+                            <th>Group</th>
+                            <th>Component</th>
+                            <th>Collected</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (unit of expiringUnits; track unit._id) {
+                        <tr>
+                            <td><span style="font-weight:500">{{ unit.bloodId }}</span></td>
+                            <td><span class="badge-custom badge-blood">{{ unit.bloodGroup }}</span></td>
+                            <td>{{ unit.componentType }}</td>
+                            <td style="color:var(--text-secondary)">{{ unit.collectedDate | date:'mediumDate' }}</td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="getExpiryBadgeClass(unit.expiryDate)">
+                                    {{ unit.expiryDate | date:'mediumDate' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="getExpiryBadgeClass(unit.expiryDate)">
+                                    {{ getExpiryStatusText(unit.expiryDate) }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Legend -->
+    <div class="card-custom">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-info-circle text-primary-custom"></i> Stock Level Guide</h3>
+        </div>
+        <div class="card-custom-body">
+            <div class="grid-cols-3" style="margin-bottom:16px">
+                <div
+                    style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:var(--success-light)">
+                    <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1.1rem"></i>
+                    <div>
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--success-dark)">Adequate Stock</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary)">≥ 10 units available</div>
+                    </div>
+                </div>
+                <div
+                    style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:var(--warning-light)">
+                    <i class="bi bi-exclamation-circle-fill" style="color:var(--warning);font-size:1.1rem"></i>
+                    <div>
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--warning-dark)">Low Stock</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary)">5-9 units remaining</div>
+                    </div>
+                </div>
+                <div
+                    style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:var(--danger-light)">
+                    <i class="bi bi-exclamation-triangle-fill" style="color:var(--danger);font-size:1.1rem"></i>
+                    <div>
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--danger-dark)">Critical</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary)">&lt; 5 units — restock urgently</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid-cols-3">
+                <div
+                    style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:var(--success-light)">
+                    <span style="font-size:1.1rem">🟢</span>
+                    <div>
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--success-dark)">Valid</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary)">More than 7 days until expiry</div>
+                    </div>
+                </div>
+                <div
+                    style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:var(--warning-light)">
+                    <span style="font-size:1.1rem">🟠</span>
+                    <div>
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--warning-dark)">Expiring Soon</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary)">Within 7 days of expiry</div>
+                    </div>
+                </div>
+                <div
+                    style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:var(--danger-light)">
+                    <span style="font-size:1.1rem">🔴</span>
+                    <div>
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--danger-dark)">Expired</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary)">Past expiry date</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    }
+</div>

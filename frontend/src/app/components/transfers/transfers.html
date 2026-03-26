@@ -1,0 +1,196 @@
+<div class="page-container" @fadeInUp>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-text">
+            <h1><i class="bi bi-arrow-left-right text-primary-custom"></i> Blood Transfers</h1>
+            <p>Manage inter-hospital blood unit transfers</p>
+        </div>
+        <button class="btn-primary-custom" (click)="openCreate()">
+            <i class="bi bi-plus-lg"></i> New Transfer
+        </button>
+    </div>
+
+    @if (loading) {
+    <app-skeleton-loader type="table" [count]="5"></app-skeleton-loader>
+    } @else {
+
+    <!-- KPI Cards -->
+    <div class="grid-cols-4" style="margin-bottom:24px" @staggerList>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ transfers.length }}</div>
+            <div class="kpi-label">Total Transfers</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color:var(--warning)">{{ pendingCount }}</div>
+            <div class="kpi-label">Pending Approval</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ totalUnitsTransferred }}</div>
+            <div class="kpi-label">Units Transferred</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ hospitals.length }}</div>
+            <div class="kpi-label">Active Hospitals</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" style="margin-bottom:16px">
+        <select [(ngModel)]="statusFilter" class="form-input" style="max-width:200px">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="In Transit">In Transit</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Rejected">Rejected</option>
+        </select>
+    </div>
+
+    <!-- Transfers Table -->
+    <div class="card-custom">
+        <div class="card-custom-header">
+            <h3><i class="bi bi-table text-primary-custom"></i> Transfer Records</h3>
+            <span style="font-size:0.82rem;color:var(--text-secondary)">{{ filteredTransfers.length }} records</span>
+        </div>
+        <div class="card-custom-body" style="padding:0">
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Blood Group</th>
+                            <th>Component</th>
+                            <th>Units</th>
+                            <th>Status</th>
+                            <th>Requested By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (t of filteredTransfers; track t._id) {
+                        <tr>
+                            <td><strong>{{ t.transferId }}</strong></td>
+                            <td>{{ hospitalName(t.fromHospital) }}</td>
+                            <td>{{ hospitalName(t.toHospital) }}</td>
+                            <td><span class="badge-custom badge-blood">{{ t.bloodGroup }}</span></td>
+                            <td>{{ t.component }}</td>
+                            <td><strong>{{ t.units }}</strong></td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="{
+                                    'badge-pending': t.status === 'Pending',
+                                    'badge-approved': t.status === 'Approved' || t.status === 'Delivered',
+                                    'badge-rejected': t.status === 'Rejected',
+                                    'badge-transit': t.status === 'In Transit'
+                                }">{{ t.status }}</span>
+                            </td>
+                            <td>{{ t.requestedBy || '—' }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    @if (t.status === 'Pending') {
+                                    <button class="btn-icon approve" title="Approve" (click)="approve(t._id!)">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <button class="btn-icon reject" title="Reject" (click)="reject(t._id!)">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    <button class="btn-icon edit" title="Edit" (click)="openEdit(t)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    }
+                                    <button class="btn-icon delete" title="Delete" (click)="deleteTransfer(t._id!)">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="9" style="text-align:center;padding:32px;color:var(--text-secondary)">
+                                <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+                                No transfers found
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Create/Edit Modal -->
+    @if (showModal) {
+    <div class="modal-backdrop" (click)="showModal = false">
+        <div class="modal-custom" (click)="$event.stopPropagation()" @fadeInUp>
+            <div class="modal-header">
+                <h3>{{ editMode ? 'Edit Transfer' : 'New Transfer Request' }}</h3>
+                <button class="btn-icon" (click)="showModal = false"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>From Hospital</label>
+                    <select [(ngModel)]="form.fromHospital" class="form-input">
+                        <option value="" disabled>Select source hospital</option>
+                        @for (h of hospitals; track h._id) {
+                        <option [value]="h._id">{{ h.name }} ({{ h.type }})</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>To Hospital</label>
+                    <select [(ngModel)]="form.toHospital" class="form-input">
+                        <option value="" disabled>Select destination hospital</option>
+                        @for (h of hospitals; track h._id) {
+                        <option [value]="h._id">{{ h.name }} ({{ h.type }})</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Blood Group</label>
+                        <select [(ngModel)]="form.bloodGroup" class="form-input">
+                            @for (bg of bloodGroups; track bg) {
+                            <option [value]="bg">{{ bg }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Component</label>
+                        <select [(ngModel)]="form.component" class="form-input">
+                            @for (c of components; track c) {
+                            <option [value]="c">{{ c }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Units</label>
+                        <input type="number" [(ngModel)]="form.units" class="form-input" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Requested By</label>
+                        <input type="text" [(ngModel)]="form.requestedBy" class="form-input"
+                            placeholder="e.g. Dr. Sharma">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea [(ngModel)]="form.notes" class="form-input" rows="2"
+                        placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-custom" (click)="showModal = false">Cancel</button>
+                <button class="btn-primary-custom" (click)="save()"
+                    [disabled]="!form.fromHospital || !form.toHospital || !form.units">
+                    {{ editMode ? 'Update' : 'Create Request' }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</div>

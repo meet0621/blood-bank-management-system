@@ -1,0 +1,251 @@
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-text">
+            <h1><i class="bi bi-bar-chart-line-fill text-primary-custom"></i> Reports & Analytics</h1>
+            <p>Comprehensive analytics, inventory insights, and donation breakdowns</p>
+        </div>
+        <div class="export-actions">
+            <button class="btn-export pdf" (click)="downloadPDF()" [disabled]="exporting">
+                <i class="bi bi-filetype-pdf"></i> Export PDF
+            </button>
+            <button class="btn-export excel" (click)="downloadExcel()" [disabled]="exporting">
+                <i class="bi bi-filetype-xlsx"></i> Export Excel
+            </button>
+        </div>
+    </div>
+
+    @if (loading) {
+    <app-skeleton-loader type="cards"></app-skeleton-loader>
+    <app-skeleton-loader type="chart"></app-skeleton-loader>
+    } @else {
+
+    <!-- KPI Summary Cards -->
+    @if (inventoryReport && donationsReport) {
+    <div class="grid-cols-4" style="margin-bottom:24px" @staggerList>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ inventoryReport.totalUnits }}</div>
+            <div class="kpi-label">Total Blood Units</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ inventoryReport.inventory?.length || 0 }}</div>
+            <div class="kpi-label">Blood Groups</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ donationsReport.totalDonors }}</div>
+            <div class="kpi-label">Total Donors</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ highestBloodGroup?.bloodGroup || '—' }}</div>
+            <div class="kpi-label">Most Donated Group</div>
+        </div>
+    </div>
+    }
+
+    <!-- Tabs -->
+    <div class="tabs-custom">
+        <button class="tab-btn" [class.active]="activeTab === 'inventory'" (click)="switchTab('inventory')">
+            <i class="bi bi-droplet-half"></i> Inventory Report
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'donations'" (click)="switchTab('donations')">
+            <i class="bi bi-people-fill"></i> Donations Report
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'analytics'" (click)="switchTab('analytics')">
+            <i class="bi bi-graph-up-arrow"></i> Analytics
+        </button>
+    </div>
+
+    <!-- Inventory Tab -->
+    @if (activeTab === 'inventory' && inventoryReport) {
+    <div class="grid-cols-2" style="gap:24px">
+        <div class="card-custom">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-bar-chart-fill text-primary-custom"></i> Inventory Overview</h3>
+            </div>
+            <div class="card-custom-body">
+                <div class="chart-container">
+                    <canvas #inventoryBarChart></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-custom">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-list-ul text-primary-custom"></i> Inventory Details</h3>
+            </div>
+            <div class="card-custom-body" style="padding:0">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (item of inventoryReport.inventory; track item.bloodGroup) {
+                        <tr>
+                            <td><span class="badge-custom badge-blood">{{ item.bloodGroup }}</span></td>
+                            <td><strong>{{ item.quantity }}</strong> units</td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="{
+                  'badge-approved': item.quantity >= 10,
+                  'badge-pending': item.quantity >= 5 && item.quantity < 10,
+                  'badge-rejected': item.quantity < 5
+                }">
+                                    {{ item.quantity >= 10 ? 'Adequate' : item.quantity >= 5 ? 'Low' : 'Critical' }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Donations Tab -->
+    @if (activeTab === 'donations' && donationsReport) {
+    <div class="grid-cols-2" style="gap:24px">
+        <div class="card-custom">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-pie-chart-fill text-primary-custom"></i> Donations Distribution</h3>
+            </div>
+            <div class="card-custom-body">
+                <div class="chart-container">
+                    <canvas #donationsChart></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-custom">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-table text-primary-custom"></i> Donations by Group</h3>
+                <span style="font-size:0.82rem;color:var(--text-secondary)">{{ donationsReport.totalDonors }}
+                    total</span>
+            </div>
+            <div class="card-custom-body" style="padding:0">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Donors</th>
+                            <th>Share</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (item of donationsReport.donationsByBloodGroup; track item.bloodGroup) {
+                        <tr>
+                            <td><span class="badge-custom badge-blood">{{ item.bloodGroup }}</span></td>
+                            <td><strong>{{ item.count }}</strong></td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div class="progress-bar-custom" style="width:80px">
+                                        <div class="progress-bar-fill high"
+                                            [style.width.%]="donationsReport.totalDonors ? (item.count / donationsReport.totalDonors * 100) : 0">
+                                        </div>
+                                    </div>
+                                    <span style="font-size:0.78rem;color:var(--text-secondary)">
+                                        {{ donationsReport.totalDonors ? (item.count / donationsReport.totalDonors * 100
+                                        | number:'1.0-0') : 0 }}%
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Analytics Tab -->
+    @if (activeTab === 'analytics' && analyticsData) {
+    <div class="analytics-grid" @fadeInUp>
+        <!-- Demand vs Supply -->
+        <div class="card-custom analytics-card-full">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-arrow-left-right text-primary-custom"></i> Demand vs Supply Gap Analysis</h3>
+            </div>
+            <div class="card-custom-body">
+                <div class="chart-container" style="height:320px">
+                    <canvas #demandSupplyChart></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donation Trends -->
+        <div class="card-custom">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-graph-up text-primary-custom"></i> Donation Trends (6 Months)</h3>
+            </div>
+            <div class="card-custom-body">
+                <div class="chart-container" style="height:280px">
+                    <canvas #trendsChart></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blood Group Heatmap -->
+        <div class="card-custom">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-grid-3x3-gap-fill text-primary-custom"></i> Blood Group Demand Heatmap</h3>
+            </div>
+            <div class="card-custom-body">
+                <div class="chart-container" style="height:280px">
+                    <canvas #heatmapChart></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gap Analysis Table -->
+        <div class="card-custom analytics-card-full">
+            <div class="card-custom-header">
+                <h3><i class="bi bi-clipboard-data text-primary-custom"></i> Supply-Demand Gap Details</h3>
+            </div>
+            <div class="card-custom-body" style="padding:0">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Supply (Units)</th>
+                            <th>Demand (Requests)</th>
+                            <th>Gap</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (item of analyticsData.demandVsSupply; track item.bloodGroup) {
+                        <tr>
+                            <td><span class="badge-custom badge-blood">{{ item.bloodGroup }}</span></td>
+                            <td><strong>{{ item.supply }}</strong></td>
+                            <td><strong>{{ item.demand }}</strong></td>
+                            <td>
+                                <span [style.color]="item.gap >= 0 ? 'var(--success)' : 'var(--danger)'"
+                                    style="font-weight:700">
+                                    {{ item.gap >= 0 ? '+' : '' }}{{ item.gap }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-custom" [ngClass]="{
+                                    'badge-approved': item.gap >= 5,
+                                    'badge-pending': item.gap >= 0 && item.gap < 5,
+                                    'badge-rejected': item.gap < 0
+                                }">
+                                    {{ item.gap >= 5 ? 'Surplus' : item.gap >= 0 ? 'Balanced' : 'Deficit' }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+    }
+</div>

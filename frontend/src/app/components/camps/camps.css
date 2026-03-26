@@ -1,0 +1,173 @@
+/* ── Camp Card Grid ── */
+.camp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.camp-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.camp-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 6px 24px rgba(196, 30, 58, 0.08);
+    transform: translateY(-2px);
+}
+
+.camp-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 18px 20px 10px;
+}
+
+.camp-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--text-primary);
+}
+
+.camp-id {
+    font-size: 0.72rem;
+    opacity: 0.45;
+    font-family: monospace;
+}
+
+.camp-card-body {
+    padding: 0 20px 14px;
+}
+
+.camp-detail {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.camp-detail i {
+    color: var(--primary);
+    font-size: 0.85rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* ── Progress ── */
+.camp-progress {
+    margin-top: 12px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+.progress-bar-track {
+    height: 7px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s ease;
+    background: var(--primary);
+}
+
+.progress-bar-fill.progress-high {
+    background: var(--success);
+}
+
+.progress-bar-fill.progress-mid {
+    background: var(--warning);
+}
+
+.progress-bar-fill.progress-low {
+    background: var(--primary);
+}
+
+/* ── Footer ── */
+.camp-card-footer {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+}
+
+.btn-danger-outline {
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ── Helpers ── */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    grid-column: 1 / -1;
+}
+
+.text-muted {
+    color: var(--text-secondary);
+}
+
+.mb-12 {
+    margin-bottom: 12px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.modal-sm {
+    max-width: 420px;
+}
+
+/* ── Stats Row ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card-icon.info {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3B82F6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .camp-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}

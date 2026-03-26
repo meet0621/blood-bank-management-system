@@ -1,0 +1,212 @@
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-text">
+            <h1><i class="bi bi-people-fill text-primary-custom"></i> Donor Management</h1>
+            <p>Manage blood donors, track donations and filter records</p>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn-primary-custom" (click)="openAddForm()">
+                <i class="bi bi-plus-lg"></i> Add Donor
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="search-input">
+            <i class="bi bi-search"></i>
+            <input class="form-input-custom" type="text" placeholder="Search donors by name..." [(ngModel)]="searchName"
+                (keyup.enter)="applyFilters()">
+        </div>
+        <select class="form-input-custom" [(ngModel)]="filterBloodGroup" style="min-width:150px;max-width:180px">
+            <option value="">All Blood Groups</option>
+            @for (bg of bloodGroups; track bg) {
+            <option [value]="bg">{{ bg }}</option>
+            }
+        </select>
+        <select class="form-input-custom" [(ngModel)]="filterGender" style="min-width:130px;max-width:160px">
+            <option value="">All Genders</option>
+            @for (g of genders; track g) {
+            <option [value]="g">{{ g }}</option>
+            }
+        </select>
+        <button class="btn-primary-custom" (click)="applyFilters()"><i class="bi bi-funnel-fill"></i> Filter</button>
+        <button class="btn-secondary-custom" (click)="resetFilters()"><i class="bi bi-arrow-counterclockwise"></i>
+            Reset</button>
+    </div>
+
+    @if (loading) {
+    <app-skeleton-loader type="table" [count]="6"></app-skeleton-loader>
+    } @else {
+
+    <!-- Results Count -->
+    <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px">
+        Showing <strong>{{ donors.length }}</strong> donor{{ donors.length !== 1 ? 's' : '' }}
+    </p>
+
+    <!-- Donors Table -->
+    <div class="card-custom">
+        <div class="card-custom-body" style="padding:0">
+            @if (donors.length > 0) {
+            <div style="overflow-x:auto">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Donor</th>
+                            <th>ID</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Blood Group</th>
+                            <th>Contact</th>
+                            <th class="d-none d-md-table-cell">Donation Date</th>
+                            <th style="text-align:right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody @staggerList>
+                        @for (donor of donors; track donor._id) {
+                        <tr>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <span class="user-initial" [style.background]="getInitialColor(donor.name)">{{
+                                        donor.name.charAt(0) }}</span>
+                                    <span style="font-weight:500">{{ donor.name }}</span>
+                                </div>
+                            </td>
+                            <td><span class="font-mono" style="color:var(--text-muted)">{{ donor.donorId }}</span></td>
+                            <td>{{ donor.age }}</td>
+                            <td>{{ donor.gender }}</td>
+                            <td><span class="badge-custom badge-blood">{{ donor.bloodGroup }}</span></td>
+                            <td>{{ donor.contact }}</td>
+                            <td class="d-none d-md-table-cell" style="color:var(--text-secondary)">{{
+                                donor.dateOfDonation | date:'mediumDate' }}</td>
+                            <td style="text-align:right">
+                                <div style="display:flex;gap:6px;justify-content:flex-end">
+                                    <button class="btn-icon primary" title="Edit" (click)="openEditForm(donor)"><i
+                                            class="bi bi-pencil-fill"></i></button>
+                                    <button class="btn-icon danger" title="Delete" (click)="deleteDonor(donor)"><i
+                                            class="bi bi-trash3-fill"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <app-empty-state icon="bi-people" title="No donors found"
+                message="No donors match your current filters. Try adjusting your search or add a new donor.">
+                <button class="btn-primary-custom" (click)="openAddForm()"><i class="bi bi-plus-lg"></i> Add
+                    Donor</button>
+            </app-empty-state>
+            }
+        </div>
+    </div>
+    }
+
+    <!-- Add/Edit Modal -->
+    @if (showAddForm) {
+    <div class="modal-overlay" (click)="closeForm()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+            <div class="modal-header-custom">
+                <h3>
+                    <i class="bi" [ngClass]="editingDonor ? 'bi-pencil-square' : 'bi-person-plus-fill'"
+                        style="margin-right:8px;color:var(--primary)"></i>
+                    {{ editingDonor ? 'Edit Donor' : 'Register New Donor' }}
+                </h3>
+                <button class="modal-close-btn" (click)="closeForm()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body-custom">
+                <form #donorFormRef="ngForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label-custom">Full Name <span class="required">*</span></label>
+                            <input class="form-input-custom" type="text" [(ngModel)]="donorForm.name" name="name"
+                                required placeholder="e.g. John Doe" #nameField="ngModel">
+                            @if (nameField.invalid && nameField.touched) {
+                            <span class="validation-msg"><i class="bi bi-exclamation-circle"></i> Name is
+                                required</span>
+                            }
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-custom">Age <span class="required">*</span></label>
+                            <input class="form-input-custom" type="number" [(ngModel)]="donorForm.age" name="age"
+                                min="18" max="65" required placeholder="18-65" #ageField="ngModel">
+                            @if (ageField.invalid && ageField.touched) {
+                            <span class="validation-msg"><i class="bi bi-exclamation-circle"></i> Age must be
+                                18-65</span>
+                            }
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-custom">Gender <span class="required">*</span></label>
+                            <select class="form-input-custom" [(ngModel)]="donorForm.gender" name="gender" required>
+                                @for (g of genders; track g) {
+                                <option [value]="g">{{ g }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-custom">Blood Group <span class="required">*</span></label>
+                            <select class="form-input-custom" [(ngModel)]="donorForm.bloodGroup" name="bloodGroup"
+                                required>
+                                @for (bg of bloodGroups; track bg) {
+                                <option [value]="bg">{{ bg }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label-custom">Address <span class="required">*</span></label>
+                            <textarea class="form-input-custom" [(ngModel)]="donorForm.address" name="address" rows="2"
+                                required placeholder="Enter full address"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label-custom">Contact Number <span class="required">*</span></label>
+                            <input class="form-input-custom" type="text" [(ngModel)]="donorForm.contact" name="contact"
+                                pattern="[0-9]{10}" required placeholder="e.g. 9876543210" #contactField="ngModel">
+                            @if (contactField.invalid && contactField.touched) {
+                            <span class="validation-msg"><i class="bi bi-exclamation-circle"></i> Enter a valid 10-digit
+                                number</span>
+                            }
+                        </div>
+                        @if (!editingDonor) {
+                        <div class="form-group">
+                            <label class="form-label-custom">Component Type</label>
+                            <select class="form-input-custom" [(ngModel)]="componentType" name="componentType"
+                                [disabled]="splitComponents">
+                                @for (comp of components; track comp) {
+                                <option [value]="comp">{{ comp }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px">
+                            <input type="checkbox" id="splitComponents" [(ngModel)]="splitComponents"
+                                name="splitComponents" style="width:18px;height:18px;accent-color:var(--primary)">
+                            <label for="splitComponents" class="form-label-custom" style="margin:0;cursor:pointer">
+                                Split into components
+                                <span style="display:block;font-size:0.72rem;color:var(--text-muted);font-weight:400">
+                                    Creates RBCs, Plasma, Platelets & Cryo units
+                                </span>
+                            </label>
+                        </div>
+                        }
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="btn-secondary-custom" (click)="closeForm()">Cancel</button>
+                <button class="btn-primary-custom" (click)="saveDonor()" [disabled]="!donorFormRef.valid">
+                    <i class="bi" [ngClass]="editingDonor ? 'bi-check-lg' : 'bi-plus-lg'"></i>
+                    {{ editingDonor ? 'Update Donor' : 'Register Donor' }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Confirm Delete Modal -->
+    <app-confirm-modal [show]="showConfirm" [title]="confirmTitle" [message]="confirmMessage" confirmText="Delete"
+        variant="danger" (confirmed)="confirmDelete()" (cancelled)="cancelDelete()">
+    </app-confirm-modal>
+
+</div>

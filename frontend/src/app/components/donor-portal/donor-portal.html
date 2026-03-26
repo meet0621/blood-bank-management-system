@@ -1,0 +1,217 @@
+<div class="portal-page">
+    <div class="portal-container">
+        <!-- Portal Header -->
+        <div class="portal-header">
+            <div class="portal-brand">
+                <i class="bi bi-droplet-fill"></i>
+                <span>Donor Portal</span>
+            </div>
+            <div class="portal-user">
+                <span class="user-greeting">Welcome, <strong>{{ userName }}</strong></span>
+                <button class="btn-logout" (click)="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        @if (loading) {
+        <div class="portal-loading">
+            <div class="spinner-lg"></div>
+            <p>Loading your portal...</p>
+        </div>
+        } @else if (donor) {
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" @staggerList>
+            <div class="stat-card stat-blood" @fadeInUp>
+                <i class="bi bi-droplet-half"></i>
+                <div class="stat-value">{{ stats.bloodGroup }}</div>
+                <div class="stat-label">Blood Group</div>
+            </div>
+            <div class="stat-card stat-donations" @fadeInUp>
+                <i class="bi bi-heart-pulse-fill"></i>
+                <div class="stat-value">{{ stats.totalDonations }}</div>
+                <div class="stat-label">Total Donations</div>
+            </div>
+            <div class="stat-card stat-lives" @fadeInUp>
+                <i class="bi bi-people-fill"></i>
+                <div class="stat-value">{{ stats.livesSaved }}</div>
+                <div class="stat-label">Lives Saved</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="portal-tabs">
+            <button [class.active]="activeTab === 'overview'" (click)="switchTab('overview')">
+                <i class="bi bi-person-vcard"></i> Profile
+            </button>
+            <button [class.active]="activeTab === 'history'" (click)="switchTab('history')">
+                <i class="bi bi-clock-history"></i> Donation History
+            </button>
+            <button [class.active]="activeTab === 'appointments'" (click)="switchTab('appointments')">
+                <i class="bi bi-calendar-check"></i> Appointments
+            </button>
+        </div>
+
+        <!-- Overview Tab -->
+        @if (activeTab === 'overview') {
+        <div class="tab-content" @fadeInUp>
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    {{ donor.name?.charAt(0) }}
+                </div>
+                <div class="profile-details">
+                    <h2>{{ donor.name }}</h2>
+                    <span class="donor-id-badge">{{ donor.donorId }}</span>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Age</label>
+                    <span>{{ donor.age }} years</span>
+                </div>
+                <div class="info-item">
+                    <label>Gender</label>
+                    <span>{{ donor.gender }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Blood Group</label>
+                    <span class="badge-blood">{{ donor.bloodGroup }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Contact</label>
+                    <span>{{ donor.contact }}</span>
+                </div>
+                <div class="info-item full-width">
+                    <label>Address</label>
+                    <span>{{ donor.address }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Last Donation</label>
+                    <span>{{ donor.dateOfDonation | date:'mediumDate' }}</span>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- History Tab -->
+        @if (activeTab === 'history') {
+        <div class="tab-content" @fadeInUp>
+            @if (historyLoading) {
+            <div class="tab-loading">
+                <div class="spinner-sm"></div> Loading history...
+            </div>
+            } @else if (donationHistory.length === 0) {
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p>No donation records found.</p>
+            </div>
+            } @else {
+            <div class="history-list">
+                @for (d of donationHistory; track d._id) {
+                <div class="history-item" @fadeInUp>
+                    <div class="history-icon">
+                        <i class="bi bi-droplet-fill"></i>
+                    </div>
+                    <div class="history-info">
+                        <strong>{{ d.bloodGroup }} — {{ d.componentType }}</strong>
+                        <span class="history-date">{{ d.collectedDate | date:'mediumDate' }}</span>
+                        <span class="history-status" [class]="'status-' + d.status?.toLowerCase()">{{ d.status }}</span>
+                    </div>
+                    <button class="btn-cert" (click)="downloadCertificate(d._id)" title="Download Certificate">
+                        <i class="bi bi-award-fill"></i> Certificate
+                    </button>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        }
+
+        <!-- Appointments Tab -->
+        @if (activeTab === 'appointments') {
+        <div class="tab-content" @fadeInUp>
+            <div class="tab-header">
+                <h3>Your Appointments</h3>
+                <button class="btn-primary-custom" (click)="showBookModal = true">
+                    <i class="bi bi-plus-lg"></i> Book Appointment
+                </button>
+            </div>
+
+            @if (appointmentsLoading) {
+            <div class="tab-loading">
+                <div class="spinner-sm"></div> Loading...
+            </div>
+            } @else if (appointments.length === 0) {
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>No appointments yet. Book one to donate!</p>
+            </div>
+            } @else {
+            <div class="appointments-list">
+                @for (a of appointments; track a._id) {
+                <div class="appt-item" @fadeInUp>
+                    <div class="appt-date">
+                        <div class="appt-day">{{ a.date | date:'dd' }}</div>
+                        <div class="appt-month">{{ a.date | date:'MMM' }}</div>
+                    </div>
+                    <div class="appt-info">
+                        <strong>{{ a.timeSlot }}</strong>
+                        <span class="appt-status" [class]="'status-' + a.status?.toLowerCase()">{{ a.status }}</span>
+                        @if (a.notes) {
+                        <span class="appt-notes">{{ a.notes }}</span>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        }
+
+        } @else {
+        <div class="portal-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <h3>No Donor Profile Found</h3>
+            <p>Your account is not linked to a donor profile. Please contact the blood bank staff.</p>
+        </div>
+        }
+    </div>
+</div>
+
+<!-- Book Appointment Modal -->
+@if (showBookModal) {
+<div class="modal-backdrop" (click)="showBookModal = false">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h3><i class="bi bi-calendar-plus"></i> Book an Appointment</h3>
+            <button class="modal-close" (click)="showBookModal = false">&times;</button>
+        </div>
+        <form (ngSubmit)="bookAppointment()">
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" [(ngModel)]="bookingForm.date" name="date" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Time Slot *</label>
+                <select [(ngModel)]="bookingForm.timeSlot" name="timeSlot" class="form-input">
+                    @for (slot of timeSlots; track slot) {
+                    <option [value]="slot">{{ slot }}</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea [(ngModel)]="bookingForm.notes" name="notes" class="form-input" rows="3"
+                    placeholder="Any special notes..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary-custom" (click)="showBookModal = false">Cancel</button>
+                <button type="submit" class="btn-primary-custom" [disabled]="!bookingForm.date">
+                    <i class="bi bi-check-lg"></i> Book
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+}

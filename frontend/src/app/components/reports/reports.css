@@ -1,0 +1,66 @@
+/* Reports component styles */
+
+/* Export buttons */
+.export-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-export:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-export.pdf {
+    background: linear-gradient(135deg, #C41E3A, #e74c3c);
+    color: #fff;
+}
+
+.btn-export.pdf:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(196, 30, 58, 0.35);
+}
+
+.btn-export.excel {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: #fff;
+}
+
+.btn-export.excel:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+/* Analytics grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.analytics-card-full {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+    .export-actions {
+        flex-wrap: wrap;
+    }
+
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}

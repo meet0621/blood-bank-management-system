@@ -1,0 +1,192 @@
+<div class="page-container" @fadeInUp>
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title"><i class="bi bi-hospital"></i> Blood Donation Camps</h1>
+            <p class="page-subtitle">Organize and track blood donation drives</p>
+        </div>
+        <button class="btn btn-primary" (click)="openForm()">
+            <i class="bi bi-plus-lg"></i> New Camp
+        </button>
+    </div>
+
+    <!-- KPI Stats -->
+    <div class="stats-row" *ngIf="report">
+        <div class="stat-card">
+            <div class="stat-card-icon primary"><i class="bi bi-hospital"></i></div>
+            <div class="stat-card-info">
+                <span class="stat-card-value">{{ report.totalCamps }}</span>
+                <span class="stat-card-label">Total Camps</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon success"><i class="bi bi-droplet-fill"></i></div>
+            <div class="stat-card-info">
+                <span class="stat-card-value">{{ report.totalCollected }}</span>
+                <span class="stat-card-label">Units Collected</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon info"><i class="bi bi-calendar-event"></i></div>
+            <div class="stat-card-info">
+                <span class="stat-card-value">{{ report.upcoming }}</span>
+                <span class="stat-card-label">Upcoming</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon warning"><i class="bi bi-bullseye"></i></div>
+            <div class="stat-card-info">
+                <span class="stat-card-value">{{ report.totalTargetUnits }}</span>
+                <span class="stat-card-label">Target Units</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label>Status</label>
+            <select class="form-input" [(ngModel)]="filterStatus" (change)="applyFilter()">
+                <option value="">All</option>
+                <option value="Upcoming">Upcoming</option>
+                <option value="Ongoing">Ongoing</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading camps...</p>
+    </div>
+
+    <!-- Camp Cards Grid -->
+    <div class="camp-grid" *ngIf="!isLoading">
+        <div *ngIf="camps.length === 0" class="empty-state" @fadeInUp>
+            <i class="bi bi-hospital" style="font-size: 3rem; opacity: 0.3"></i>
+            <p>No camps found</p>
+        </div>
+
+        <div class="camp-card" *ngFor="let camp of camps" @staggerList>
+            <div class="camp-card-header">
+                <div>
+                    <h3 class="camp-name">{{ camp.campName }}</h3>
+                    <span class="badge" [ngClass]="getStatusBadge(camp.status)">{{ camp.status }}</span>
+                </div>
+                <span class="camp-id">{{ camp.campId }}</span>
+            </div>
+
+            <div class="camp-card-body">
+                <div class="camp-detail"><i class="bi bi-geo-alt"></i> {{ camp.location }}</div>
+                <div class="camp-detail"><i class="bi bi-person-badge"></i> {{ camp.organizerName }}</div>
+                <div class="camp-detail"><i class="bi bi-calendar3"></i> {{ formatDate(camp.date) }}</div>
+                <div class="camp-detail"><i class="bi bi-people"></i> {{ getDonorCount(camp) }} donors registered</div>
+
+                <!-- Progress bar -->
+                <div class="camp-progress">
+                    <div class="progress-label">
+                        <span>{{ camp.actualUnitsCollected }} / {{ camp.targetUnits }} units</span>
+                        <span>{{ getProgress(camp) }}%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" [style.width.%]="getProgress(camp)"
+                            [class.progress-high]="getProgress(camp) >= 75"
+                            [class.progress-mid]="getProgress(camp) >= 40 && getProgress(camp) < 75"
+                            [class.progress-low]="getProgress(camp) < 40">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="camp-card-footer">
+                <button class="btn btn-sm btn-outline" (click)="openAddDonor(camp)" *ngIf="camp.status !== 'Completed'">
+                    <i class="bi bi-person-plus"></i> Add Donor
+                </button>
+                <button class="btn btn-sm btn-outline" (click)="openForm(camp)">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline btn-danger-outline" (click)="deleteCamp(camp)">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New/Edit Camp Modal -->
+    <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+        <div class="modal-content" (click)="$event.stopPropagation()" @fadeInUp>
+            <div class="modal-header">
+                <h3><i class="bi bi-hospital"></i> {{ editingCamp ? 'Edit Camp' : 'New Camp' }}</h3>
+                <button class="modal-close" (click)="closeForm()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <form (ngSubmit)="saveCamp()" class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Camp Name *</label>
+                    <input type="text" class="form-input" [(ngModel)]="formData.campName" name="campName" required
+                        placeholder="e.g. World Blood Donor Day Drive" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Location *</label>
+                        <input type="text" class="form-input" [(ngModel)]="formData.location" name="location" required
+                            placeholder="e.g. City Hall, Chennai" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Organizer *</label>
+                        <input type="text" class="form-input" [(ngModel)]="formData.organizerName" name="organizerName"
+                            required placeholder="e.g. Red Cross Society" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Date *</label>
+                        <input type="date" class="form-input" [(ngModel)]="formData.date" name="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Units *</label>
+                        <input type="number" class="form-input" [(ngModel)]="formData.targetUnits" name="targetUnits"
+                            required min="1" />
+                    </div>
+                </div>
+                <div class="form-group" *ngIf="editingCamp">
+                    <label class="form-label">Status</label>
+                    <select class="form-input" [(ngModel)]="formData.status" name="status">
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Ongoing">Ongoing</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" (click)="closeForm()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> {{ editingCamp ? 'Update' : 'Create' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Donor Modal -->
+    <div class="modal-overlay" *ngIf="showAddDonor" (click)="showAddDonor = false">
+        <div class="modal-content modal-sm" (click)="$event.stopPropagation()" @fadeInUp>
+            <div class="modal-header">
+                <h3><i class="bi bi-person-plus"></i> Add Donor to Camp</h3>
+                <button class="modal-close" (click)="showAddDonor = false"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <form (ngSubmit)="addDonorToCamp()" class="modal-body">
+                <p class="text-muted mb-12">Adding to: <strong>{{ selectedCamp?.campName }}</strong></p>
+                <div class="form-group">
+                    <label class="form-label">Select Donor</label>
+                    <select class="form-input" [(ngModel)]="addDonorId" name="addDonorId" required>
+                        <option value="" disabled>Select a donor</option>
+                        <option *ngFor="let d of donors" [value]="d._id">{{ d.name }} ({{ d.bloodGroup }})</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" (click)="showAddDonor = false">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

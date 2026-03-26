@@ -1,0 +1,290 @@
+/* ── Login Page ── */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(196, 30, 58, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 50%, rgba(196, 30, 58, 0.05) 0%, transparent 60%);
+    animation: bgShift 15s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(3%, 3%);
+    }
+}
+
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    animation: fadeUp 0.5s ease-out;
+}
+
+/* ── Branding ── */
+.login-branding {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.brand-icon-large {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #FFF;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(196, 30, 58, 0.35);
+}
+
+.login-branding h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #FFF;
+    margin: 0 0 4px;
+    letter-spacing: -0.03em;
+}
+
+.login-branding p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+}
+
+/* ── Card ── */
+.login-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.login-card-header {
+    padding: 28px 32px 0;
+    text-align: center;
+}
+
+.login-card-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #FFF;
+    margin: 0 0 4px;
+}
+
+.login-card-header p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* ── Form ── */
+.login-form {
+    padding: 24px 32px;
+}
+
+.login-form .form-group {
+    margin-bottom: 18px;
+}
+
+.login-form .form-label-custom {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.login-form .form-input-custom {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    color: #FFF;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.login-form .form-input-custom::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.login-form .form-input-custom:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Password toggle */
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-input-wrapper .form-input-custom {
+    padding-right: 44px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 1rem;
+    transition: color 0.2s;
+}
+
+.password-toggle:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Login Button ── */
+.btn-login {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #FFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+    margin-top: 8px;
+}
+
+.btn-login:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(196, 30, 58, 0.4);
+}
+
+.btn-login:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-login:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Footer ── */
+.login-footer {
+    padding: 16px 32px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.demo-credentials {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.credentials-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.credential-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.credential-role {
+    color: var(--primary);
+    font-weight: 700;
+    min-width: 50px;
+}
+
+.credential-email {
+    color: rgba(255, 255, 255, 0.6);
+    font-family: monospace;
+    font-size: 0.78rem;
+}
+
+.credential-hint {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.72rem;
+    margin: 8px 0 0;
+}
+
+.credential-hint code {
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .login-form {
+        padding: 20px;
+    }
+
+    .login-footer {
+        padding: 14px 20px 20px;
+    }
+
+    .login-card-header {
+        padding: 24px 20px 0;
+    }
+}

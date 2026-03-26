@@ -1,0 +1,81 @@
+<div class="login-page">
+    <div class="login-container">
+        <!-- Branding Section -->
+        <div class="login-branding">
+            <div class="brand-icon-large">
+                <i class="bi bi-droplet-fill"></i>
+            </div>
+            <h1>BloodBank Pro</h1>
+            <p>Blood Bank Management System</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="login-card">
+            <div class="login-card-header">
+                <h2>Welcome Back</h2>
+                <p>Sign in to your account</p>
+            </div>
+
+            <form (ngSubmit)="login()" class="login-form">
+                <div class="form-group">
+                    <label class="form-label-custom" for="email">
+                        <i class="bi bi-envelope"></i> Email Address
+                    </label>
+                    <input id="email" type="email" class="form-input-custom" [(ngModel)]="email" name="email"
+                        placeholder="admin@bloodbank.com" autocomplete="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label-custom" for="password">
+                        <i class="bi bi-lock"></i> Password
+                    </label>
+                    <div class="password-input-wrapper">
+                        <input id="password" [type]="showPassword ? 'text' : 'password'" class="form-input-custom"
+                            [(ngModel)]="password" name="password" placeholder="Enter your password"
+                            autocomplete="current-password" required />
+                        <button type="button" class="password-toggle" (click)="showPassword = !showPassword">
+                            <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" [disabled]="isLoading">
+                    <span *ngIf="!isLoading">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </span>
+                    <span *ngIf="isLoading">
+                        <i class="bi bi-arrow-repeat spin"></i> Signing in...
+                    </span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p class="demo-credentials">
+                    <i class="bi bi-info-circle"></i> Demo Accounts
+                </p>
+                <div class="credentials-grid">
+                    <div class="credential-item">
+                        <span class="credential-role">Admin</span>
+                        <span class="credential-email">admin&#64;bloodbank.com</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-role">Staff</span>
+                        <span class="credential-email">staff&#64;bloodbank.com</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-role">Donor</span>
+                        <span class="credential-email">donor&#64;bloodbank.com</span>
+                    </div>
+                </div>
+                <p class="credential-hint">Password for all: <code>role + 123</code></p>
+            </div>
+
+            <div class="login-public-link"
+                style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid rgba(148,163,184,0.1)">
+                <a routerLink="/request" style="color:#C41E3A;text-decoration:none;font-size:0.88rem;font-weight:600">
+                    <i class="bi bi-droplet-half"></i> Need Blood? Request Here
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

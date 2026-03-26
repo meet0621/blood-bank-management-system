@@ -1,0 +1,97 @@
+/* ── Time Slot Grid ── */
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.slot-btn {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: all var(--transition-fast);
+}
+
+.slot-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(196, 30, 58, 0.06);
+}
+
+.slot-btn.selected {
+    border-color: var(--primary);
+    background: rgba(196, 30, 58, 0.12);
+    color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(196, 30, 58, 0.2);
+}
+
+.slot-btn.full {
+    opacity: 0.4;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.slot-time {
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.slot-avail {
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+/* ── Action Icon Buttons ── */
+.actions-cell {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-full);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all var(--transition-fast);
+}
+
+.btn-success-icon {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--success);
+}
+
+.btn-success-icon:hover {
+    background: rgba(34, 197, 94, 0.25);
+}
+
+.btn-warning-icon {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning);
+}
+
+.btn-warning-icon:hover {
+    background: rgba(245, 158, 11, 0.25);
+}
+
+.btn-danger-icon {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--danger);
+}
+
+.btn-danger-icon:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.fw-600 {
+    font-weight: 600;
+}
